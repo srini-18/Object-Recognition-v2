@@ -1,18 +1,23 @@
-const video = document.getElementById('webcam-feed');
-const startDetectionButton = document.getElementById('start-detection');
-const detectionResultsDiv = document.getElementById('detection-results');
+const canvas = document.createElement("canvas");
+const context = canvas.getContext("2d");
 
-// Get user's webcam
-navigator.mediaDevices.getUserMedia({
-        video: true
+function sendFrame(video) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+
+    const imageData = canvas.toDataURL("image/jpeg");
+
+    fetch("/detect", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ image: imageData })
     })
-    .then(stream => {
-        video.srcObject = stream;
-    })
-    .catch(err => console.error("Error accessing webcam:", err));
-startDetectionButton.addEventListener('click', () => {
-    captureAndDetect();
-});
+    .then(res => res.json())
+    .then(data => console.log(data));
+}
 function captureAndDetect() {
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
@@ -40,6 +45,31 @@ function captureAndDetect() {
             detectionResultsDiv.textContent = "Error connecting to detection server.";
         });
     }, 'image/jpeg');
+}const video = document.getElementById("video");
+
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+    video.srcObject = stream;
+    video.play();
+});
+
+function captureAndSend() {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+
+    const imageData = canvas.toDataURL("image/jpeg");
+
+    fetch("/detect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: imageData })
+    })
+    .then(res => res.json())
+    .then(data => console.log(data));
 }
 
 function displayDetectionResults(results) {
